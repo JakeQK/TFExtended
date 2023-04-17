@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Process.h"
 
+#define ERROR(msg) { /* Error handling needs to be implemented */ }
+
 Process::Process()
 {
 }
@@ -35,9 +37,16 @@ HMODULE Process::LoadLibraryRemotely(DWORD ProcessID, const char* LibraryPath)
 	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, 0, ProcessID);
 
 	void* location = VirtualAllocEx(hProcess, 0, MAX_PATH, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-	WriteProcessMemory(hProcess, location, LibraryPath, strlen(LibraryPath) + 1, 0);
+	if(!location)
+		ERROR("Failed to allocate memory in remote process")
+
+	BOOL writeSuccess = WriteProcessMemory(hProcess, location, LibraryPath, strlen(LibraryPath) + 1, 0);
+	if(!writeSuccess)
+		ERROR("Failed to WriteProcessMemory")
 
 	HANDLE hThread = CreateRemoteThread(hProcess, 0, 0, (LPTHREAD_START_ROUTINE)LoadLibraryA, location, 0, 0);
+	if(!hThread)
+		ERROR("Failed to create remote thread for LoadLibraryW")
 
 	WaitForSingleObject(hThread, INFINITE);
 
@@ -49,4 +58,48 @@ HMODULE Process::LoadLibraryRemotely(DWORD ProcessID, const char* LibraryPath)
 	CloseHandle(hProcess);
 
 	return (HMODULE)ExitCode;
+}
+
+BOOL Process::UnloadLibraryRemotely(DWORD ProcessID, std::wstring& moduleName)
+{
+	HANDLE Snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, ProcessID);
+	if (!Snapshot)
+		ERROR("Failed to create snapshot for remote process.")
+
+	MODULEENTRY32W moduleEntry = { sizeof(moduleEntry) };
+	
+	bool found = false;
+	BOOL bMoreModules = Module32FirstW(Snapshot, &moduleEntry);
+
+	for (; bMoreModules; bMoreModules = Module32NextW(Snapshot, &moduleEntry))
+	{
+		std::wstring ModuleName(moduleEntry.szModule);
+
+		found = (ModuleName == moduleName);
+		if (found) break;
+	}
+
+	if (!found)
+		ERROR("Failed to find module in remote process.")
+
+	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, 0, ProcessID);
+
+	if (!hProcess)
+		ERROR("Failed to get handle for process.")
+
+	HANDLE hThread = CreateRemoteThread(hProcess, 0, 0, (LPTHREAD_START_ROUTINE)FreeLibrary, moduleEntry.modBaseAddr, 0, 0);
+
+	if (!hThread)
+		ERROR("Failed to create remote thread for FreeLibrary")
+
+	WaitForSingleObject(hThread, INFINITE);
+
+	DWORD ExitCode;
+	GetExitCodeThread(hThread, &ExitCode);
+
+	CloseHandle(hThread);
+	CloseHandle(hProcess);
+	CloseHandle(Snapshot);
+
+	return (BOOL)ExitCode;
 }
