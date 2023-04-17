@@ -10,5 +10,12 @@
 
 // add headers that you want to pre-compile here
 #include <windows.h>
+#include <minwindef.h>
+#include <string>
+#include <TlHelp32.h>
+#include <filesystem>
+#include <iostream>
+
+namespace fs = std::filesystem;
 
 #endif //PCH_H
