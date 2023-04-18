@@ -15,6 +15,7 @@
 #include <TlHelp32.h>
 #include <filesystem>
 #include <iostream>
+#include <algorithm>
 
 namespace fs = std::filesystem;
 

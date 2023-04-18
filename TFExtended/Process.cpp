@@ -3,14 +3,6 @@
 
 #define ERROR(msg) { /* Error handling needs to be implemented */ }
 
-Process::Process()
-{
-}
-
-Process::~Process()
-{
-}
-
 DWORD Process::GetProcessID(LPCTSTR ProcessName)
 {
 	PROCESSENTRY32 pt;
@@ -60,7 +52,30 @@ HMODULE Process::LoadLibraryRemotely(DWORD ProcessID, const char* LibraryPath)
 	return (HMODULE)ExitCode;
 }
 
-BOOL Process::UnloadLibraryRemotely(DWORD ProcessID, std::wstring& moduleName)
+BOOL Process::FreeLibraryRemotely(DWORD ProcessID, HMODULE handle)
+{
+	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, 0, ProcessID);
+
+	if (!hProcess)
+		ERROR("Failed to get handle for process.")
+
+		HANDLE hThread = CreateRemoteThread(hProcess, 0, 0, (LPTHREAD_START_ROUTINE)FreeLibrary, handle, 0, 0);
+
+	if (!hThread)
+		ERROR("Failed to create remote thread for FreeLibrary")
+
+		WaitForSingleObject(hThread, INFINITE);
+
+	DWORD ExitCode;
+	GetExitCodeThread(hThread, &ExitCode);
+
+	CloseHandle(hThread);
+	CloseHandle(hProcess);
+
+	return (BOOL)ExitCode;
+}
+
+BOOL Process::FreeLibraryRemotely(DWORD ProcessID, std::wstring& moduleName)
 {
 	HANDLE Snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, ProcessID);
 	if (!Snapshot)
@@ -80,26 +95,13 @@ BOOL Process::UnloadLibraryRemotely(DWORD ProcessID, std::wstring& moduleName)
 	}
 
 	if (!found)
+	{
 		ERROR("Failed to find module in remote process.")
+	}
 
-	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, 0, ProcessID);
+	BOOL ret = FreeLibraryRemotely(ProcessID, (HMODULE)moduleEntry.modBaseAddr);
 
-	if (!hProcess)
-		ERROR("Failed to get handle for process.")
-
-	HANDLE hThread = CreateRemoteThread(hProcess, 0, 0, (LPTHREAD_START_ROUTINE)FreeLibrary, moduleEntry.modBaseAddr, 0, 0);
-
-	if (!hThread)
-		ERROR("Failed to create remote thread for FreeLibrary")
-
-	WaitForSingleObject(hThread, INFINITE);
-
-	DWORD ExitCode;
-	GetExitCodeThread(hThread, &ExitCode);
-
-	CloseHandle(hThread);
-	CloseHandle(hProcess);
 	CloseHandle(Snapshot);
 
-	return (BOOL)ExitCode;
+	return ret;
 }
