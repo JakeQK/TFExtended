@@ -8,6 +8,9 @@
 #define PCH_H
 #define WIN32_LEAN_AND_MEAN
 
+#define TEERROR(msg)
+#define TEINFO(msg)
+
 // add headers that you want to pre-compile here
 #include <windows.h>
 #include <minwindef.h>
@@ -16,6 +19,9 @@
 #include <filesystem>
 #include <iostream>
 #include <algorithm>
+#include <d3d11.h>
+
+#pragma comment(lib, "d3d11.lib")
 
 namespace fs = std::filesystem;
 
