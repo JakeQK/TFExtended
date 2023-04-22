@@ -28,8 +28,27 @@ typedef HRESULT(__stdcall* SwapChainPresent_t) (IDXGISwapChain* pSwapChain, UINT
 // Function pointer for the original Present function
 SwapChainPresent_t oPresent = nullptr;
 
+typedef void (*ImGuiCallback)();
+std::vector<ImGuiCallback> ImGuiCallbacks;
+
 // WndProc forward declaration
 LRESULT APIENTRY WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+// Adds ImGuiCallback functions to ImGuiCallbacks vector to be called within Present Hook
+__declspec(dllexport) void registerImGuiCallback(ImGuiCallback callback)
+{
+	// Ensure callback isn't already part of the vector, if not, add it
+	if(std::find(ImGuiCallbacks.begin(), ImGuiCallbacks.end(), callback) == ImGuiCallbacks.end())
+		ImGuiCallbacks.push_back(callback);
+}
+
+__declspec(dllexport) void unregisterImGuiCallback(ImGuiCallback callback)
+{
+	// Finds callback in ImGuiCallbacks vector and removes it if found
+	auto callbackIterator = std::find(ImGuiCallbacks.begin(), ImGuiCallbacks.end(), callback);
+	if (callbackIterator != ImGuiCallbacks.end())
+		ImGuiCallbacks.erase(callbackIterator);
+}
 
 // Swap Chain Present Hook
 // It is called whenever the Present funciton is called by the application
@@ -69,7 +88,17 @@ HRESULT __stdcall hSwapChainPresent(IDXGISwapChain* pSwapChain, UINT SyncInterva
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
+	// Render TFExtended Main Menu
 	MainMenu->Render();
+
+	// Render ImGuiCallback functions
+	if (!ImGuiCallbacks.empty())
+	{
+		for (ImGuiCallback callback : ImGuiCallbacks)
+		{
+			callback();
+		}
+	}
 
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
