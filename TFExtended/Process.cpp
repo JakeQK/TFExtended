@@ -1,8 +1,6 @@
 #include "pch.h"
 #include "Process.h"
 
-#define ERROR(msg) { /* Error handling needs to be implemented */ }
-
 DWORD Process::GetProcessID(LPCTSTR ProcessName)
 {
 	PROCESSENTRY32 pt;
@@ -30,15 +28,15 @@ HMODULE Process::LoadLibraryRemotely(DWORD ProcessID, const char* LibraryPath)
 
 	void* location = VirtualAllocEx(hProcess, 0, MAX_PATH, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 	if(!location)
-		ERROR("Failed to allocate memory in remote process")
+		TEERROR("Failed to allocate memory in remote process")
 
 	BOOL writeSuccess = WriteProcessMemory(hProcess, location, LibraryPath, strlen(LibraryPath) + 1, 0);
 	if(!writeSuccess)
-		ERROR("Failed to WriteProcessMemory")
+		TEERROR("Failed to WriteProcessMemory")
 
 	HANDLE hThread = CreateRemoteThread(hProcess, 0, 0, (LPTHREAD_START_ROUTINE)LoadLibraryA, location, 0, 0);
 	if(!hThread)
-		ERROR("Failed to create remote thread for LoadLibraryW")
+		TEERROR("Failed to create remote thread for LoadLibraryW")
 
 	WaitForSingleObject(hThread, INFINITE);
 
@@ -57,12 +55,12 @@ BOOL Process::FreeLibraryRemotely(DWORD ProcessID, HMODULE handle)
 	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, 0, ProcessID);
 
 	if (!hProcess)
-		ERROR("Failed to get handle for process.")
+		TEERROR("Failed to get handle for process.")
 
 		HANDLE hThread = CreateRemoteThread(hProcess, 0, 0, (LPTHREAD_START_ROUTINE)FreeLibrary, handle, 0, 0);
 
 	if (!hThread)
-		ERROR("Failed to create remote thread for FreeLibrary")
+		TEERROR("Failed to create remote thread for FreeLibrary")
 
 		WaitForSingleObject(hThread, INFINITE);
 
@@ -79,7 +77,7 @@ BOOL Process::FreeLibraryRemotely(DWORD ProcessID, std::wstring& moduleName)
 {
 	HANDLE Snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, ProcessID);
 	if (!Snapshot)
-		ERROR("Failed to create snapshot for remote process.")
+		TEERROR("Failed to create snapshot for remote process.")
 
 	MODULEENTRY32W moduleEntry = { sizeof(moduleEntry) };
 	
@@ -96,7 +94,7 @@ BOOL Process::FreeLibraryRemotely(DWORD ProcessID, std::wstring& moduleName)
 
 	if (!found)
 	{
-		ERROR("Failed to find module in remote process.")
+		TEERROR("Failed to find module in remote process.")
 	}
 
 	BOOL ret = FreeLibraryRemotely(ProcessID, (HMODULE)moduleEntry.modBaseAddr);

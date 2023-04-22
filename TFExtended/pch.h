@@ -8,8 +8,8 @@
 #define PCH_H
 #define WIN32_LEAN_AND_MEAN
 
-#define TEERROR(msg)
-#define TEINFO(msg)
+#define TEERROR(msg) {}
+#define TEINFO(msg) {}
 
 // add headers that you want to pre-compile here
 #include <windows.h>
