@@ -9,3 +9,7 @@ TFExtended is a open-source *.DLL loader and manager for Trials Fusion
 - Place dbgcore.dll and TFExtended.dll in Trials Fusion/datapack folder
 - Create a folder named plugins and place plugins within here
 - Done
+# Credits
+- [ImGui](https://github.com/ocornut/imgui) by ocornut
+- [MinHook](https://github.com/TsudaKageyu/minhook) by TsudaKageyu
+- [spdlog](https://github.com/gabime/spdlog) by gabime
