@@ -12,16 +12,17 @@ static ID3D11Device*			g_pd3dDevice = nullptr;
 static ID3D11DeviceContext*		g_pd3dContext = nullptr;
 static IDXGISwapChain*			g_pSwapChain = nullptr;
 
-DWORD_PTR*						pSwapChainVTable = nullptr;
-DWORD_PTR*						pDeviceVTable = nullptr;
-DWORD_PTR*						pDeviceContextVTable = nullptr;
+static LPVOID*					g_pSwapChainVTable = nullptr;
 
 static std::once_flag			g_isPresentInitialized;
 
-typedef HRESULT(__stdcall* tD3D11Present) (IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags);
-tD3D11Present oPresent = nullptr;
+typedef HRESULT(__stdcall* SwapChainPresent_t) (IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags);
+// Function pointer for the original Present function
+SwapChainPresent_t oPresent = nullptr;
 
-HRESULT __stdcall PresentHook(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags)
+// Swap Chain Present Hook
+// It is called whenever the Present funciton is called by the application
+HRESULT __stdcall hSwapChainPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags)
 {
 	std::call_once(g_isPresentInitialized, [&]() {
 		pSwapChain->GetDevice(__uuidof(g_pd3dDevice), reinterpret_cast<LPVOID*>(&g_pd3dDevice));
@@ -29,72 +30,62 @@ HRESULT __stdcall PresentHook(IDXGISwapChain* pSwapChain, UINT SyncInterval, UIN
 
 		});
 
+	// Call the original Present function using the stored function pointer oPresent
 	return oPresent(pSwapChain, SyncInterval, Flags);
 }
 
+// Creates a dummy swap chain descriptor
+DXGI_SWAP_CHAIN_DESC CreateDummySwapchainDesc()
+{
+	DXGI_SWAP_CHAIN_DESC sd{ 0 };
+	sd.BufferCount = 1;
+	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	sd.BufferDesc.Height = 800;
+	sd.BufferDesc.Width = 600;
+	sd.BufferDesc.RefreshRate = { 60, 1 };
+	sd.OutputWindow = GetForegroundWindow();
+	sd.Windowed = TRUE;
+	sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+	sd.SampleDesc.Count = 1;
+	sd.SampleDesc.Quality = 0;
+	return sd;
+}
+
+// Initializes the Direct3D 11 Swap Chain Present Hook
 DWORD WINAPI InitD3D11Hook()
 {
-	D3D_FEATURE_LEVEL levels[] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_1 };
-	D3D_FEATURE_LEVEL obtainedLevel;
-	DXGI_SWAP_CHAIN_DESC sd;
-	{
-		ZeroMemory(&sd, sizeof(sd));
-		sd.BufferCount = 1;
-		sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-		sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-		sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-		sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-		sd.OutputWindow = g_hWnd;
-		sd.SampleDesc.Count = 1;
-		sd.Windowed = ((GetWindowLongPtr(g_hWnd, GWL_STYLE) & WS_POPUP) != 0) ? false : true;
-		sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-		sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-		sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+	D3D_FEATURE_LEVEL featureLevel;
+	// Get dummy swap chain descriptor
+	DXGI_SWAP_CHAIN_DESC sd = CreateDummySwapchainDesc();
 
-		sd.BufferDesc.Width = 1;
-		sd.BufferDesc.Height = 1;
-		sd.BufferDesc.RefreshRate.Numerator = 0;
-		sd.BufferDesc.RefreshRate.Denominator = 1;
-	}
-
-	HRESULT hr = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0, levels, sizeof(levels) / sizeof(D3D_FEATURE_LEVEL), D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice, &obtainedLevel, &g_pd3dContext);
-	if (FAILED(hr))
-	{
+	// Create a dummy device and swap chain
+	HRESULT hr = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_REFERENCE, nullptr, 0, nullptr, 0, D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dContext);
+	if (FAILED(hr)) {
 		TEERROR("Failed to create device and swapchain")
 	}
 
-	pSwapChainVTable = (DWORD_PTR*)(g_pSwapChain);
-	pSwapChainVTable = (DWORD_PTR*)(pSwapChainVTable[0]);
+	// Get the VTable for the swap chain and the Present function
+	g_pSwapChainVTable = *(LPVOID**)g_pSwapChain;
+	SwapChainPresent_t pSwapChainPresent = (SwapChainPresent_t)(g_pSwapChainVTable[8]);
 
+	// Hook the Present function using MinHook
 	if (MH_Initialize() != MH_OK) { TEERROR("Failed to initialize MinHook") }
-	if(MH_CreateHook((DWORD_PTR*)pSwapChainVTable[8], PresentHook, reinterpret_cast<LPVOID*>(&oPresent)) != MH_OK) {TEERROR("Failed to create Present Hook") }
+	if (MH_CreateHook(pSwapChainPresent, &hSwapChainPresent, reinterpret_cast<LPVOID*>(&oPresent)) != MH_OK) { TEERROR("Failed to create Present Hook") }
+	if (MH_EnableHook(pSwapChainPresent) != MH_OK) { TEERROR("Failed to enable Present Hook") }
 
+	// Return 1 if successful
 	return 1;
 }
 
+// DLL entry point
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
-	{
 		DisableThreadLibraryCalls(hModule);
-
-		auto logger = spdlog::basic_logger_mt("basic_logger", "logs/basic-log.txt");
-
-		Process process;
-		if (process.GetProcessID(L"trials_fusion.exe"))
-		{
-			logger->info("Trials Fusion :)");
-			logger->flush();
-		}
-		else
-		{
-			logger->info("No Trials Fusion :(");
-			logger->flush();
-		}
-	}
+		CreateThread(0, 0, (LPTHREAD_START_ROUTINE)InitD3D11Hook, 0, 0, 0);
 		break;
 	case DLL_PROCESS_DETACH:
 		break;
