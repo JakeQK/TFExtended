@@ -2,7 +2,7 @@
 TFExtended is a open-source *.DLL loader and manager for Trials Fusion
 # Features
 - Custom *.DLL Loader to allow extension of Trials Fusion functionality.
-- D3D11 Swap Chain Present Hook to allow ImGui Rendering.
+- D3D11 Swap Chain Present Hook for ImGui Rendering.
 - ImGui Callback registration to allow plugins to render their own ImGui code.
 - Menu GUI for managing plugins.
 # Usage
