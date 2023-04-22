@@ -1,4 +1,7 @@
 #pragma once
+//#include "LogManager.h"
+//#include "Log.h"
+
 class Process
 {
 public:

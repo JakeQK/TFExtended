@@ -1,5 +1,6 @@
 #pragma once
 #include "Process.h"
+#include "Log.h"
 
 struct Plugin
 {
@@ -30,7 +31,7 @@ public:
 	~PluginManager() = default;
 
 	// Load plugin by path
-	void LoadPlugin(std::string path);
+	void LoadPlugin(fs::path path);
 
 	void LoadAllPlugins();
 
@@ -49,7 +50,7 @@ public:
 	std::vector<Plugin> m_plugins;
 
 private:
-	Process process;
-	std::string m_pluginDirectory;
+	Process m_process;
+	std::string m_pluginDirectory = ".//plugins";
 	const int m_loadDelay = 100;
 };

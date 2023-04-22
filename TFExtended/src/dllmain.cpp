@@ -1,35 +1,36 @@
 #include "pch.h"
 
+#include "LogManager.h"
+#include "Log.h"
 #include "PluginManager.h"
 #include "TFExtendedMenu.h"
 #include "Process.h"
 
-#include "vendor/minhook/include/MinHook.h"
-#include "vendor/imgui/imgui.h"
-#include "vendor/imgui/backends/imgui_impl_dx11.h"
-#include "vendor/imgui/backends/imgui_impl_win32.h"
+#include "minhook/include/MinHook.h"
+#include "imgui.h"
+#include "backends/imgui_impl_dx11.h"
+#include "backends/imgui_impl_win32.h"
 
-static HWND                     g_hWnd = nullptr;
-static HMODULE					g_hModule = nullptr;
-static ID3D11Device*			g_pd3dDevice = nullptr;
-static ID3D11DeviceContext*		g_pd3dContext = nullptr;
-static IDXGISwapChain*			g_pSwapChain = nullptr;
+static HWND							g_hWnd = nullptr;
+static HMODULE						g_hModule = nullptr;
+static ID3D11Device*				g_pd3dDevice = nullptr;
+static ID3D11DeviceContext*			g_pd3dContext = nullptr;
+static IDXGISwapChain*				g_pSwapChain = nullptr;
+static LPVOID*						g_pSwapChainVTable = nullptr;
+static WNDPROC						oWndProc;
 
-static LPVOID*					g_pSwapChainVTable = nullptr;
+LogManager							g_logManager;
+std::unique_ptr<PluginManager>		g_pluginManager;
+std::unique_ptr<TFExtendedMenu>		g_mainMenu;
 
-static WNDPROC oWndProc;
-
-static std::once_flag			g_isPresentInitialized;
-
-std::unique_ptr<PluginManager> pluginManager;
-std::unique_ptr<TFExtendedMenu> MainMenu;
+static std::once_flag				g_isPresentInitialized;
 
 typedef HRESULT(__stdcall* SwapChainPresent_t) (IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags);
 // Function pointer for the original Present function
-SwapChainPresent_t oPresent = nullptr;
+SwapChainPresent_t					oPresent = nullptr;
 
 typedef void (*ImGuiCallback)();
-std::vector<ImGuiCallback> ImGuiCallbacks;
+std::vector<ImGuiCallback>			ImGuiCallbacks;
 
 // WndProc forward declaration
 LRESULT APIENTRY WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -37,17 +38,25 @@ LRESULT APIENTRY WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 // Adds ImGuiCallback functions to ImGuiCallbacks vector to be called within Present Hook
 __declspec(dllexport) void registerImGuiCallback(ImGuiCallback callback)
 {
+	TFE_DEBUG("registerImGuiCallback called!");
 	// Ensure callback isn't already part of the vector, if not, add it
-	if(std::find(ImGuiCallbacks.begin(), ImGuiCallbacks.end(), callback) == ImGuiCallbacks.end())
+	if (std::find(ImGuiCallbacks.begin(), ImGuiCallbacks.end(), callback) == ImGuiCallbacks.end()) 
+	{
 		ImGuiCallbacks.push_back(callback);
+		TFE_INFO("{} callback registered.", fmt::ptr(callback))
+	}
 }
 
 __declspec(dllexport) void unregisterImGuiCallback(ImGuiCallback callback)
 {
+	TFE_DEBUG("unregisterImGuiCallback called!");
 	// Finds callback in ImGuiCallbacks vector and removes it if found
 	auto callbackIterator = std::find(ImGuiCallbacks.begin(), ImGuiCallbacks.end(), callback);
 	if (callbackIterator != ImGuiCallbacks.end())
+	{
 		ImGuiCallbacks.erase(callbackIterator);
+		TFE_INFO("{} callback unregistered.", fmt::ptr(callback));
+	}
 }
 
 // Swap Chain Present Hook
@@ -70,8 +79,8 @@ HRESULT __stdcall hSwapChainPresent(IDXGISwapChain* pSwapChain, UINT SyncInterva
 		oWndProc = (WNDPROC)SetWindowLongPtr(g_hWnd, GWLP_WNDPROC, (LONG_PTR)WndProc);
 
 		// Create unique pointers for objects
-		pluginManager = std::make_unique<PluginManager>();
-		MainMenu = std::make_unique<TFExtendedMenu>(pluginManager);
+		g_pluginManager = std::make_unique<PluginManager>();
+		g_mainMenu = std::make_unique<TFExtendedMenu>(g_pluginManager);
 
 		ImGui::CreateContext();
 		ImGui::StyleColorsDark();
@@ -79,17 +88,19 @@ HRESULT __stdcall hSwapChainPresent(IDXGISwapChain* pSwapChain, UINT SyncInterva
 		ImGui_ImplWin32_Init(g_hWnd);
 		ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dContext);
 
+		TFE_INFO("Swap chain present hook initialized.");
+
 		});
 
 	if (GetAsyncKeyState(VK_F1) & 0x1)
-		MainMenu->ToggleMenuOpen();
+		g_mainMenu->ToggleMenuOpen();
 
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
 	// Render TFExtended Main Menu
-	MainMenu->Render();
+	g_mainMenu->Render();
 
 	// Render ImGuiCallback functions
 	if (!ImGuiCallbacks.empty())
@@ -125,28 +136,37 @@ DXGI_SWAP_CHAIN_DESC CreateDummySwapchainDesc()
 	return sd;
 }
 
-// Initializes the Direct3D 11 Swap Chain Present Hook
-DWORD WINAPI InitD3D11Hook()
+// Creates the D3D11 Present Hook
+void HookD3D11Present()
 {
-	g_hWnd = GetForegroundWindow();
 	D3D_FEATURE_LEVEL featureLevel;
 	// Get dummy swap chain descriptor
 	DXGI_SWAP_CHAIN_DESC sd = CreateDummySwapchainDesc();
 
 	// Create a dummy device and swap chain
 	HRESULT hr = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_REFERENCE, nullptr, 0, nullptr, 0, D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dContext);
-	if (FAILED(hr)) {
-		TEERROR("Failed to create device and swapchain")
-	}
+	if (FAILED(hr))
+		TFE_ERROR("Failed to create device and swap chain")
 
 	// Get the VTable for the swap chain and the Present function
 	g_pSwapChainVTable = *(LPVOID**)g_pSwapChain;
 	SwapChainPresent_t pSwapChainPresent = (SwapChainPresent_t)(g_pSwapChainVTable[8]);
 
 	// Hook the Present function using MinHook
-	if (MH_Initialize() != MH_OK) { TEERROR("Failed to initialize MinHook") }
-	if (MH_CreateHook(pSwapChainPresent, &hSwapChainPresent, reinterpret_cast<LPVOID*>(&oPresent)) != MH_OK) { TEERROR("Failed to create Present Hook") }
-	if (MH_EnableHook(pSwapChainPresent) != MH_OK) { TEERROR("Failed to enable Present Hook") }
+	if (MH_Initialize() != MH_OK) { TFE_ERROR("Failed to initialize MinHook") }
+	if (MH_CreateHook(pSwapChainPresent, &hSwapChainPresent, reinterpret_cast<LPVOID*>(&oPresent)) != MH_OK) { TFE_ERROR("Failed to create Present Hook") }
+	if (MH_EnableHook(pSwapChainPresent) != MH_OK) { TFE_ERROR("Failed to enable Present Hook") }
+}
+
+// Initializes TFExtended
+DWORD WINAPI InitTFExtended()
+{
+	g_logManager.Initialize();
+	TFE_INFO("TFExtended v{}.{}", 1, 0)
+
+	g_hWnd = GetForegroundWindow();
+
+	HookD3D11Present();
 
 	// Keeps application alive until termination key is pressed
 	static bool TerminateTFExtended = false;
@@ -158,6 +178,7 @@ DWORD WINAPI InitD3D11Hook()
 		Sleep(500);
 	}
 
+	// Restores original window procedure
 	SetWindowLongPtr(g_hWnd, GWLP_WNDPROC, (LONG_PTR)oWndProc);
 	return 0;
 }
@@ -169,7 +190,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 	{
 	case DLL_PROCESS_ATTACH:
 		DisableThreadLibraryCalls(hModule);
-		CreateThread(0, 0, (LPTHREAD_START_ROUTINE)InitD3D11Hook, 0, 0, 0);
+		CreateThread(0, 0, (LPTHREAD_START_ROUTINE)InitTFExtended, 0, 0, 0);
 		break;
 	case DLL_PROCESS_DETACH:
 		break;

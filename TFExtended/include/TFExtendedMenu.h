@@ -1,5 +1,5 @@
 #include "PluginManager.h"
-#include "vendor/imgui/imgui.h"
+#include "imgui.h"
 
 class TFExtendedMenu
 {
