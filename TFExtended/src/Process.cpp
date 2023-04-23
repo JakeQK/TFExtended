@@ -70,7 +70,7 @@ HMODULE Process::LoadLibraryRemotely(DWORD ProcessID, const char* LibraryPath)
 	}
 
 	// Create a remote thread in the remote process that calls LoadLibraryA function with the path to the library
-	HANDLE hThread = CreateRemoteThread(hProcess, 0, 0, (LPTHREAD_START_ROUTINE)GetProcAddress(GetModuleHandleA("Kernel32.dll"), "LoadLibraryA"), pDllPath, 0, 0);
+	HANDLE hThread = CreateRemoteThreadEx(hProcess, nullptr, 0, (LPTHREAD_START_ROUTINE)GetProcAddress(GetModuleHandleA("Kernel32.dll"), "LoadLibraryA"), pDllPath, 0, nullptr, nullptr);
 
 	// Check if remote thread creation was successful
 	if (!hThread)
@@ -113,7 +113,12 @@ BOOL Process::FreeLibraryRemotely(DWORD ProcessID, HMODULE hModule)
 	}
 
 	// Create a remote thread in the remote process that calls FreeLibrary function with the handle to the loaded library
-	HANDLE hThread = CreateRemoteThread(hProcess, 0, 0, (LPTHREAD_START_ROUTINE)GetProcAddress(GetModuleHandleA("Kernel32.dll"), "FreeLibrary"), (LPVOID)hModule, 0, 0);
+
+	LPVOID freeLibraryAddress = GetProcAddress(GetModuleHandleA("kernel32.dll"), "FreeLibrary");
+
+	HANDLE hThread = CreateRemoteThread(hProcess, 0, 0, (LPTHREAD_START_ROUTINE)freeLibraryAddress, (LPVOID)hModule, 0, 0);
+
+
 
 	// Check if remote thread creation was successful
 	if (!hThread) 
