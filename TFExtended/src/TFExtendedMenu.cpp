@@ -13,6 +13,10 @@ TFExtendedMenu::~TFExtendedMenu()
 // Renders the Main Menu for TFExtended
 void TFExtendedMenu::Render()
 {
+	ImGuiIO& io = ImGui::GetIO();
+	if (io.WantCaptureMouse)
+		SetCursor(NULL);
+
 	// Return if menu is closed
 	if (!m_isMenuOpen)
 		return;

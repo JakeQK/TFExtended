@@ -390,6 +390,12 @@
     <ClInclude Include="vendor\spdlog\sinks\kafka_sink.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\D3D11Hook.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\InputHook.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dllmain.cpp">
@@ -444,6 +450,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\LogManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\D3D11Hook.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\InputHook.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

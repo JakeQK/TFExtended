@@ -1,3 +1,4 @@
+#pragma once
 #include "PluginManager.h"
 #include "imgui.h"
 
