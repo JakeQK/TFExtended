@@ -2,15 +2,8 @@
 //#include "LogManager.h"
 //#include "Log.h"
 
-class Process
+namespace Utility
 {
-public:
-	// Constructor
-	Process() = default;
-
-	// Destructor
-	~Process() = default;
-
 	// Get Process ID by Process Name
 	DWORD GetProcessID(LPCTSTR ProcessName);
 

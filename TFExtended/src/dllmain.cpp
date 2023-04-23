@@ -11,6 +11,9 @@
 #include "backends/imgui_impl_dx11.h"
 #include "backends/imgui_impl_win32.h"
 
+#define TFEXTENDED_VERSION_MAJOR 1
+#define TFEXTENDED_VERSION_MINOR 0
+
 static HWND							g_hWnd = nullptr;
 static HMODULE						g_hModule = nullptr;
 static ID3D11Device*				g_pd3dDevice = nullptr;
@@ -77,10 +80,6 @@ HRESULT __stdcall hSwapChainPresent(IDXGISwapChain* pSwapChain, UINT SyncInterva
 
 		// Set window procedure to our own (WndProc) and store original in oWndProc
 		oWndProc = (WNDPROC)SetWindowLongPtr(g_hWnd, GWLP_WNDPROC, (LONG_PTR)WndProc);
-
-		// Create unique pointers for objects
-		g_pluginManager = std::make_unique<PluginManager>();
-		g_mainMenu = std::make_unique<TFExtendedMenu>(g_pluginManager);
 
 		ImGui::CreateContext();
 		ImGui::StyleColorsDark();
@@ -161,11 +160,24 @@ void HookD3D11Present()
 // Initializes TFExtended
 DWORD WINAPI InitTFExtended()
 {
-	g_logManager.Initialize();
-	TFE_INFO("TFExtended v{}.{}", 1, 0)
+	// trials_fusion.exe launches UbisoftGameLauncher.exe and then actually launches the game
+	// if you don't put this check, it will launch DLL's twice
+	if (Utility::GetProcessID(L"UbisoftGameLauncher.exe") == 0)
+		return 0;
 
+	// Initialize our Log Manager
+	g_logManager.Initialize();
+	TFE_INFO("TFExtended v{}.{}", TFEXTENDED_VERSION_MAJOR, TFEXTENDED_VERSION_MINOR);
+
+	// Get trials_fusion.exe hWnd
 	g_hWnd = GetForegroundWindow();
 
+	// Create unique pointers for our objects
+	g_pluginManager = std::make_unique<PluginManager>();
+	g_mainMenu = std::make_unique<TFExtendedMenu>(g_pluginManager);
+
+
+	// Hook D3D11 Present
 	HookD3D11Present();
 
 	// Keeps application alive until termination key is pressed
@@ -208,11 +220,15 @@ LRESULT APIENTRY WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	switch (uMsg)
 	{
 	case WM_LBUTTONDOWN:
-		ImGui::GetIO().MouseDown[0] = true; return DefWindowProc(hwnd, uMsg, wParam, lParam);
+		ImGui::GetIO().MouseDown[0] = true; //return DefWindowProc(hwnd, uMsg, wParam, lParam);
+		if(!g_mainMenu->IsMenuOpen())
+			return oWndProc(hwnd, uMsg, wParam, lParam);
 
 		break;
 	case WM_LBUTTONUP:
-		ImGui::GetIO().MouseDown[0] = false; return DefWindowProc(hwnd, uMsg, wParam, lParam);
+		ImGui::GetIO().MouseDown[0] = false; //return DefWindowProc(hwnd, uMsg, wParam, lParam);
+		if (!g_mainMenu->IsMenuOpen())
+			return oWndProc(hwnd, uMsg, wParam, lParam);
 
 		break;
 	case WM_RBUTTONDOWN:

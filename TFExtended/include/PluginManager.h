@@ -50,7 +50,6 @@ public:
 	std::vector<Plugin> m_plugins;
 
 private:
-	Process m_process;
 	std::string m_pluginDirectory = ".//plugins";
 	const int m_loadDelay = 100;
 };

@@ -1,15 +1,15 @@
 #include "pch.h"
 #include "PluginManager.h"
 
-PluginManager::PluginManager() : m_process()
+PluginManager::PluginManager()
 {
 }
 
 void PluginManager::LoadPlugin(fs::path path)
 {
 	Plugin plugin;
-	DWORD processID = m_process.GetProcessID(L"trials_fusion.exe");
-	plugin.handle = m_process.LoadLibraryRemotely(processID, path.string().c_str());
+	DWORD processID = Utility::GetProcessID(L"trials_fusion.exe");
+	plugin.handle = Utility::LoadLibraryRemotely(processID, path.string().c_str());
 	plugin.enabled = true;
 	plugin.path = path.string();
 	plugin.name = path.stem().string();
@@ -69,8 +69,8 @@ void PluginManager::EnablePlugin(const std::vector<Plugin>::iterator& it)
 {
 	if (!it->enabled)
 	{
-		DWORD processID = m_process.GetProcessID(L"trials_fusion.exe");
-		it->handle = m_process.LoadLibraryRemotely(processID, it->path.c_str());
+		DWORD processID = Utility::GetProcessID(L"trials_fusion.exe");
+		it->handle = Utility::LoadLibraryRemotely(processID, it->path.c_str());
 		it->enabled = true;
 	}
 }
@@ -102,8 +102,8 @@ void PluginManager::DisablePlugin(const std::vector<Plugin>::iterator& it)
 {
 	if (it->enabled)
 	{
-		DWORD processID = m_process.GetProcessID(L"trials_fusion.exe");
-		m_process.FreeLibraryRemotely(processID, it->handle);
+		DWORD processID = Utility::GetProcessID(L"trials_fusion.exe");
+		Utility::FreeLibraryRemotely(processID, it->handle);
 		it->enabled = false;
 	}
 }
