@@ -1,6 +1,4 @@
 #pragma once
-//#include "LogManager.h"
-//#include "Log.h"
 
 namespace Utility
 {

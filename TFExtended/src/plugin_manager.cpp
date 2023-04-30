@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "PluginManager.h"
+#include "plugin_manager.h"
 
 PluginManager::PluginManager()
 {

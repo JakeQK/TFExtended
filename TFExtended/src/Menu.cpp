@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "Menu.h"
+#include "menu.h"
 
 Menu::Menu(std::unique_ptr<PluginManager>& pluginManager) : m_pluginManager(pluginManager)
 {

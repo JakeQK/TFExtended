@@ -158,14 +158,14 @@ copy /Y "$(SolutionDir)$(Configuration)\$(ProjectName).lib" "$(SolutionDir)TFExt
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\D3D11Hook.h" />
-    <ClInclude Include="include\InputHook.h" />
-    <ClInclude Include="include\Log.h" />
-    <ClInclude Include="include\LogManager.h" />
-    <ClInclude Include="include\Menu.h" />
+    <ClInclude Include="include\d3d11_hook.h" />
+    <ClInclude Include="include\input_hook.h" />
+    <ClInclude Include="include\log.h" />
+    <ClInclude Include="include\log_manager.h" />
+    <ClInclude Include="include\menu.h" />
     <ClInclude Include="include\pch.h" />
-    <ClInclude Include="include\PluginManager.h" />
-    <ClInclude Include="include\Process.h" />
+    <ClInclude Include="include\plugin_manager.h" />
+    <ClInclude Include="include\process.h" />
     <ClInclude Include="vendor\imgui\backends\imgui_impl_dx11.h" />
     <ClInclude Include="vendor\imgui\backends\imgui_impl_win32.h" />
     <ClInclude Include="vendor\imgui\imconfig.h" />
@@ -287,19 +287,19 @@ copy /Y "$(SolutionDir)$(Configuration)\$(ProjectName).lib" "$(SolutionDir)TFExt
     <ClInclude Include="vendor\spdlog\version.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\D3D11Hook.cpp" />
+    <ClCompile Include="src\d3d11_hook.cpp" />
     <ClCompile Include="src\dllmain.cpp" />
-    <ClCompile Include="src\InputHook.cpp" />
-    <ClCompile Include="src\LogManager.cpp" />
-    <ClCompile Include="src\Menu.cpp" />
+    <ClCompile Include="src\input_hook.cpp" />
+    <ClCompile Include="src\log_manager.cpp" />
+    <ClCompile Include="src\menu.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\PluginManager.cpp" />
-    <ClCompile Include="src\Process.cpp" />
+    <ClCompile Include="src\plugin_manager.cpp" />
+    <ClCompile Include="src\process.cpp" />
     <ClCompile Include="vendor\imgui\backends\imgui_impl_dx11.cpp" />
     <ClCompile Include="vendor\imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="vendor\imgui\imgui.cpp" />

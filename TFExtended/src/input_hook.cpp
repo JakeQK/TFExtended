@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "InputHook.h"
+#include "input_hook.h"
 
 WNDPROC oWndProc;
 HWND hWnd = nullptr;

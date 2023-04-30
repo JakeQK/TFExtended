@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "LogManager.h"
+#include "log_manager.h"
 
 void LogManager::Initialize()
 {

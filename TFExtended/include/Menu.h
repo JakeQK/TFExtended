@@ -1,5 +1,5 @@
 #pragma once
-#include "PluginManager.h"
+#include "plugin_manager.h"
 #include "imgui.h"
 
 class Menu

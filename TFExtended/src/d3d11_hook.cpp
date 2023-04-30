@@ -1,12 +1,11 @@
 #include "pch.h"
-#include "D3D11Hook.h"
+#include "d3d11_hook.h"
 
 std::vector<PresentCallback_t> g_presentCallbacks;
 
 // Adds ImGuiCallback functions to ImGuiCallbacks vector to be called within Present Hook
 void registerPresentCallback(PresentCallback_t callback)
 {
-	TFE_DEBUG("registerImGuiCallback called!");
 	// Ensure callback isn't already part of the vector, if not, add it
 	if (std::find(g_presentCallbacks.begin(), g_presentCallbacks.end(), callback) == g_presentCallbacks.end())
 	{
@@ -17,7 +16,6 @@ void registerPresentCallback(PresentCallback_t callback)
 
 void unregisterPresentCallback(PresentCallback_t callback)
 {
-	TFE_DEBUG("unregisterImGuiCallback called!");
 	// Finds callback in ImGuiCallbacks vector and removes it if found
 	auto callbackIterator = std::find(g_presentCallbacks.begin(), g_presentCallbacks.end(), callback);
 	if (callbackIterator != g_presentCallbacks.end())

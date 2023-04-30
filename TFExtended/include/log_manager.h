@@ -1,5 +1,5 @@
 #pragma once
-#include "Log.h"
+#include "log.h"
 #include "spdlog/sinks/basic_file_sink.h"
 
 class LogManager

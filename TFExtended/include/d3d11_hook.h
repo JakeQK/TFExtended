@@ -1,12 +1,12 @@
 #pragma once
 
-#include "Menu.h"
+#include "menu.h"
+#include "log.h"
 
 #include "minhook/include/MinHook.h"
 #include "imgui.h"
 #include "backends/imgui_impl_dx11.h"
 #include "backends/imgui_impl_win32.h"
-#include "Log.h"
 
 typedef void (*PresentCallback_t)();
 

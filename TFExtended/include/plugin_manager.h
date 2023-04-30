@@ -1,6 +1,6 @@
 #pragma once
-#include "Process.h"
-#include "Log.h"
+#include "process.h"
+#include "log.h"
 
 struct Plugin
 {

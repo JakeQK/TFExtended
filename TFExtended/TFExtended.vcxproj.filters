@@ -18,10 +18,10 @@
     <ClInclude Include="include\pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\PluginManager.h">
+    <ClInclude Include="include\plugin_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\Process.h">
+    <ClInclude Include="include\process.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vendor\spdlog\cfg\argv.h">
@@ -378,22 +378,22 @@
     <ClInclude Include="vendor\imgui\backends\imgui_impl_win32.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\Menu.h">
+    <ClInclude Include="include\menu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\LogManager.h">
+    <ClInclude Include="include\log_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\Log.h">
+    <ClInclude Include="include\log.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vendor\spdlog\sinks\kafka_sink.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\D3D11Hook.h">
+    <ClInclude Include="include\d3d11_hook.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\InputHook.h">
+    <ClInclude Include="include\input_hook.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -404,10 +404,10 @@
     <ClCompile Include="src\pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\PluginManager.cpp">
+    <ClCompile Include="src\plugin_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Process.cpp">
+    <ClCompile Include="src\process.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="vendor\minhook\src\hde\hde32.c">
@@ -446,16 +446,16 @@
     <ClCompile Include="vendor\imgui\backends\imgui_impl_win32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Menu.cpp">
+    <ClCompile Include="src\menu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\LogManager.cpp">
+    <ClCompile Include="src\log_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\D3D11Hook.cpp">
+    <ClCompile Include="src\d3d11_hook.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\InputHook.cpp">
+    <ClCompile Include="src\input_hook.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

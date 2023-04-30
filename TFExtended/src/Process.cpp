@@ -1,6 +1,6 @@
 #include "pch.h"
-#include "Process.h"
-#include "Log.h"
+#include "process.h"
+#include "log.h"
 
 
 namespace Utility 
