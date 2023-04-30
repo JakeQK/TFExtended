@@ -5,9 +5,9 @@
 
 #define IMPORT __declspec(dllimport)
 
-typedef void (*ImGuiCallback)();
+typedef void (*PresentCallback_t)();
 
-IMPORT void registerImGuiCallback(ImGuiCallback callback);
+IMPORT void registerPresentCallback(PresentCallback_t callback);
 
-IMPORT void unregisterImGuiCallback(ImGuiCallback callback);
+IMPORT void unregisterPresentCallback(PresentCallback_t callback);
 

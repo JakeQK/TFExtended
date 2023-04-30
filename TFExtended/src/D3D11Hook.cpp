@@ -1,9 +1,36 @@
 #include "pch.h"
 #include "D3D11Hook.h"
 
+std::vector<PresentCallback_t> g_presentCallbacks;
+
+// Adds ImGuiCallback functions to ImGuiCallbacks vector to be called within Present Hook
+void registerPresentCallback(PresentCallback_t callback)
+{
+	TFE_DEBUG("registerImGuiCallback called!");
+	// Ensure callback isn't already part of the vector, if not, add it
+	if (std::find(g_presentCallbacks.begin(), g_presentCallbacks.end(), callback) == g_presentCallbacks.end())
+	{
+		g_presentCallbacks.push_back(callback);
+		TFE_INFO("{} callback registered.", fmt::ptr(callback))
+	}
+}
+
+void unregisterPresentCallback(PresentCallback_t callback)
+{
+	TFE_DEBUG("unregisterImGuiCallback called!");
+	// Finds callback in ImGuiCallbacks vector and removes it if found
+	auto callbackIterator = std::find(g_presentCallbacks.begin(), g_presentCallbacks.end(), callback);
+	if (callbackIterator != g_presentCallbacks.end())
+	{
+		g_presentCallbacks.erase(callbackIterator);
+		TFE_INFO("{} callback unregistered.", fmt::ptr(callback));
+	}
+}
+
+
 namespace D3D11Hook
 {
-	std::unique_ptr<TFExtendedMenu>		g_mainMenu = nullptr;
+	std::unique_ptr<Menu>		g_mainMenu = nullptr;
 	static ID3D11Device*				g_pd3dDevice = nullptr;
 	static ID3D11DeviceContext*			g_pd3dContext = nullptr;
 	static IDXGISwapChain*				g_pSwapChain = nullptr;
@@ -13,31 +40,6 @@ namespace D3D11Hook
 
 	typedef HRESULT(__stdcall* SwapChainPresent_t) (IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags);
 	SwapChainPresent_t					oPresent = nullptr;
-	std::vector<ImGuiCallback>			ImGuiCallbacks;
-
-	// Adds ImGuiCallback functions to ImGuiCallbacks vector to be called within Present Hook
-	void registerImGuiCallback(ImGuiCallback callback)
-	{
-		TFE_DEBUG("registerImGuiCallback called!");
-		// Ensure callback isn't already part of the vector, if not, add it
-		if (std::find(ImGuiCallbacks.begin(), ImGuiCallbacks.end(), callback) == ImGuiCallbacks.end())
-		{
-			ImGuiCallbacks.push_back(callback);
-			TFE_INFO("{} callback registered.", fmt::ptr(callback))
-		}
-	}
-
-	void unregisterImGuiCallback(ImGuiCallback callback)
-	{
-		TFE_DEBUG("unregisterImGuiCallback called!");
-		// Finds callback in ImGuiCallbacks vector and removes it if found
-		auto callbackIterator = std::find(ImGuiCallbacks.begin(), ImGuiCallbacks.end(), callback);
-		if (callbackIterator != ImGuiCallbacks.end())
-		{
-			ImGuiCallbacks.erase(callbackIterator);
-			TFE_INFO("{} callback unregistered.", fmt::ptr(callback));
-		}
-	}
 
 	// Swap Chain Present Hook
 	// It is called whenever the Present funciton is called by the application
@@ -83,9 +85,9 @@ namespace D3D11Hook
 		g_mainMenu->Render();
 
 		// Render ImGuiCallback functions
-		if (!ImGuiCallbacks.empty())
+		if (!g_presentCallbacks.empty())
 		{
-			for (ImGuiCallback callback : ImGuiCallbacks)
+			for (PresentCallback_t callback : g_presentCallbacks)
 			{
 				callback();
 			}
@@ -140,7 +142,7 @@ namespace D3D11Hook
 
 	void Initialize(std::unique_ptr<PluginManager>& pluginManager)
 	{
-		g_mainMenu = std::make_unique<TFExtendedMenu>(pluginManager);
+		g_mainMenu = std::make_unique<Menu>(pluginManager);
 		HookD3D11Present();
 	}
 }

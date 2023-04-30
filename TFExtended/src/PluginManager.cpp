@@ -7,15 +7,21 @@ PluginManager::PluginManager()
 
 void PluginManager::LoadPlugin(fs::path path)
 {
+
+	TFE_INFO("PATH: {}", path.string());
+	TFE_FLUSH;
 	Plugin plugin;
 	DWORD processID = Utility::GetProcessID(L"trials_fusion.exe");
-	plugin.handle = Utility::LoadLibraryRemotely(processID, path.string().c_str());
+	plugin.handle = LoadLibraryA(path.string().c_str());
+
+	//LoadLibraryA(path.string().c_str());
+
 	plugin.enabled = true;
 	plugin.path = path.string();
 	plugin.name = path.stem().string();
 
 	m_plugins.push_back(plugin);
-	TFE_INFO("{} loaded", plugin.name);
+	TFE_INFO("Plugin Loaded: {}\nHandle: {}\nPath: {}", plugin.name, (int)plugin.handle, plugin.path);
 }
 
 void PluginManager::LoadAllPlugins()

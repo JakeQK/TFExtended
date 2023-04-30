@@ -2,12 +2,12 @@
 #include "PluginManager.h"
 #include "imgui.h"
 
-class TFExtendedMenu
+class Menu
 {
 public:
-	TFExtendedMenu(std::unique_ptr<PluginManager>& pluginManager);
+	Menu(std::unique_ptr<PluginManager>& pluginManager);
 
-	~TFExtendedMenu();
+	~Menu();
 
 	void Render();
 

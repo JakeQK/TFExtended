@@ -12,6 +12,7 @@
 #define TFE_WARN(...)		if (spdlog::get(TFE_DEFAULT_LOGGER_NAME) != nullptr) { spdlog::get(TFE_DEFAULT_LOGGER_NAME)->warn(__VA_ARGS__); }
 #define TFE_ERROR(...)		if (spdlog::get(TFE_DEFAULT_LOGGER_NAME) != nullptr) { spdlog::get(TFE_DEFAULT_LOGGER_NAME)->error(__VA_ARGS__); }
 #define TFE_CRITICAL(...)	if (spdlog::get(TFE_DEFAULT_LOGGER_NAME) != nullptr) { spdlog::get(TFE_DEFAULT_LOGGER_NAME)->critical(__VA_ARGS__); }
+#define TFE_FLUSH			if (spdlog::get(TFE_DEFAULT_LOGGER_NAME) != nullptr) { spdlog::get(TFE_DEFAULT_LOGGER_NAME)->flush(); }
 #else
 // Disable logging for release builds 
 #define TFE_TRACE(...)		(void)0

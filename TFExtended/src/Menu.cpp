@@ -1,17 +1,17 @@
 #include "pch.h"
-#include "TFExtendedMenu.h"
+#include "Menu.h"
 
-TFExtendedMenu::TFExtendedMenu(std::unique_ptr<PluginManager>& pluginManager) : m_pluginManager(pluginManager)
+Menu::Menu(std::unique_ptr<PluginManager>& pluginManager) : m_pluginManager(pluginManager)
 {
 
 }
 
-TFExtendedMenu::~TFExtendedMenu()
+Menu::~Menu()
 {
 }
 
 // Renders the Main Menu for TFExtended
-void TFExtendedMenu::Render()
+void Menu::Render()
 {
 	ImGuiIO& io = ImGui::GetIO();
 	if (io.WantCaptureMouse)

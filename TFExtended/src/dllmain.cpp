@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "TFExtendedMenu.h"
+#include "Menu.h"
 #include "PluginManager.h"
 #include "LogManager.h"
 #include "D3D11Hook.h"
@@ -33,6 +33,8 @@ DWORD WINAPI InitTFExtended()
 
 	// Construct our PluginManager utilizing unique pointer
 	g_pluginManager = std::make_unique<PluginManager>();
+
+	g_pluginManager->LoadAllPlugins();
 
 	// Initialize Input Hook
 	InputHook::Initialize(GetForegroundWindow());
