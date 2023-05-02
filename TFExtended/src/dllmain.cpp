@@ -4,7 +4,6 @@
 #include "plugin_manager.h"
 #include "log_manager.h"
 #include "d3d11_hook.h"
-#include "input_hook.h"
 #include "process.h"
 #include "log.h"
 
@@ -36,9 +35,6 @@ DWORD WINAPI InitTFExtended()
 
 	g_pluginManager->LoadAllPlugins();
 
-	// Initialize Input Hook
-	InputHook::Initialize(GetForegroundWindow());
-
 	// Initialize our D3D11 Hooks
 	D3D11Hook::Initialize(g_pluginManager);
 
@@ -52,7 +48,6 @@ DWORD WINAPI InitTFExtended()
 		Sleep(500);
 	}
 
-	InputHook::Shutdown();
 	g_logManager.Shutdown();
 	return 0;
 }

@@ -2,17 +2,12 @@
 
 #include "menu.h"
 #include "log.h"
+#include "input_hook.h"
 
 #include "minhook/include/MinHook.h"
 #include "imgui.h"
 #include "backends/imgui_impl_dx11.h"
 #include "backends/imgui_impl_win32.h"
-
-typedef void (*PresentCallback_t)();
-
-__declspec(dllexport) void registerPresentCallback(PresentCallback_t callback);
-
-__declspec(dllexport) void unregisterPresentCallback(PresentCallback_t callback);
 
 namespace D3D11Hook
 {

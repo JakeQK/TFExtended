@@ -1,10 +1,13 @@
 #include "pch.h"
 #include "d3d11_hook.h"
 
+typedef void (*PresentCallback_t)();
 std::vector<PresentCallback_t> g_presentCallbacks;
 
+std::unique_ptr<InputHook> g_inputHook;
+
 // Adds ImGuiCallback functions to ImGuiCallbacks vector to be called within Present Hook
-void registerPresentCallback(PresentCallback_t callback)
+__declspec(dllexport) void registerPresentCallback(PresentCallback_t callback)
 {
 	// Ensure callback isn't already part of the vector, if not, add it
 	if (std::find(g_presentCallbacks.begin(), g_presentCallbacks.end(), callback) == g_presentCallbacks.end())
@@ -14,7 +17,7 @@ void registerPresentCallback(PresentCallback_t callback)
 	}
 }
 
-void unregisterPresentCallback(PresentCallback_t callback)
+__declspec(dllexport) void unregisterPresentCallback(PresentCallback_t callback)
 {
 	// Finds callback in ImGuiCallbacks vector and removes it if found
 	auto callbackIterator = std::find(g_presentCallbacks.begin(), g_presentCallbacks.end(), callback);
@@ -24,7 +27,6 @@ void unregisterPresentCallback(PresentCallback_t callback)
 		TFE_INFO("{} callback unregistered.", fmt::ptr(callback));
 	}
 }
-
 
 namespace D3D11Hook
 {
@@ -65,8 +67,12 @@ namespace D3D11Hook
 			ImGui::StyleColorsDark();
 
 			// Setup Platform/Renderer backends
-			ImGui_ImplWin32_Init(g_hWnd);
+			ImGui_ImplWin32_Init(sd.OutputWindow);
 			ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dContext);
+
+			// Initialize Input Hook
+			g_inputHook = std::make_unique<InputHook>();
+			g_inputHook->Initialize(sd.OutputWindow);
 
 			TFE_INFO("Swap chain present hook initialized.");
 

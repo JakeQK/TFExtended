@@ -10,4 +10,3 @@ typedef void (*PresentCallback_t)();
 IMPORT void registerPresentCallback(PresentCallback_t callback);
 
 IMPORT void unregisterPresentCallback(PresentCallback_t callback);
-

@@ -4,25 +4,6 @@
 WNDPROC oWndProc;
 HWND hWnd = nullptr;
 
-namespace InputHook
-{
-	void Initialize(HWND hWindow)
-	{
-		if (hWnd == nullptr) {
-			hWnd = hWindow;
-			oWndProc = (WNDPROC)SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR)WndProc);
-		}
-	}
-
-	void Shutdown()
-	{
-		if (hWnd != nullptr) {
-			SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR)oWndProc);
-			hWnd = nullptr;
-		}
-	}
-};
-
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 LRESULT APIENTRY WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -68,3 +49,20 @@ LRESULT APIENTRY WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	return CallWindowProc(oWndProc, hwnd, uMsg, wParam, lParam);
 }
+
+void InputHook::Initialize(HWND hWindow)
+{
+	if (hWnd == nullptr) {
+		hWnd = hWindow;
+		oWndProc = (WNDPROC)SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR)WndProc);
+	}
+}
+
+void InputHook::Shutdown()
+{
+	if (hWnd != nullptr) {
+		SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR)oWndProc);
+		hWnd = nullptr;
+	}
+}
+

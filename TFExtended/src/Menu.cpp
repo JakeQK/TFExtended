@@ -13,16 +13,15 @@ Menu::~Menu()
 // Renders the Main Menu for TFExtended
 void Menu::Render()
 {
+	static ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse;
 	ImGuiIO& io = ImGui::GetIO();
-	if (io.WantCaptureMouse)
-		SetCursor(NULL);
 
 	// Return if menu is closed
 	if (!m_isMenuOpen)
 		return;
 
 	// Set window properties
-	ImGui::Begin("TFExtended", &m_isMenuOpen);
+	ImGui::Begin("TFExtended", &m_isMenuOpen, flags);
 	ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.65f);
 	ImGui::PushItemWidth(-140);
 
