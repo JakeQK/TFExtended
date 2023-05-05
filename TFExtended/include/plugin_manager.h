@@ -30,17 +30,13 @@ public:
 	// Destructor
 	~PluginManager() = default;
 
-	// Load plugin by path
-	void LoadPlugin(fs::path path);
+	void AddAllPlugins();
 
-	void LoadAllPlugins();
-
-	void UnloadAllPlugins();
+	void RemoveAllPlugins();
 
 	void EnablePlugin(const std::vector<Plugin>::iterator& it);
 
 	void EnablePlugin(Plugin plugin);
-
 
 	void DisablePlugin(Plugin plugin);
 
@@ -48,8 +44,6 @@ public:
 
 public:
 	std::vector<Plugin> m_plugins;
-
 private:
-	std::string m_pluginDirectory = ".//plugins";
-	const int m_loadDelay = 100;
+	std::string pluginsDirectory = ".\\plugins";
 };

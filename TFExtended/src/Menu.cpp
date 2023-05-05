@@ -37,7 +37,7 @@ void Menu::Render()
 			ImGui::Text("No plugins currently loaded");
 			if (ImGui::Button("Load plugins"))
 			{
-				m_pluginManager->LoadAllPlugins();
+				m_pluginManager->AddAllPlugins();
 			}
 		}
 		else
@@ -64,7 +64,7 @@ void Menu::Render()
 			// Unload all plugins button
 			if (ImGui::Button("Unload all plugins"))
 			{
-				m_pluginManager->UnloadAllPlugins();
+				m_pluginManager->RemoveAllPlugins();
 			}
 		}
 		ImGui::EndTabItem();

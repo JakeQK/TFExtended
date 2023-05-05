@@ -33,7 +33,7 @@ DWORD WINAPI InitTFExtended()
 	// Construct our PluginManager utilizing unique pointer
 	g_pluginManager = std::make_unique<PluginManager>();
 
-	g_pluginManager->LoadAllPlugins();
+	g_pluginManager->AddAllPlugins();
 
 	// Initialize our D3D11 Hooks
 	D3D11Hook::Initialize(g_pluginManager);

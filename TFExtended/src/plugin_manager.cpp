@@ -5,63 +5,38 @@ PluginManager::PluginManager()
 {
 }
 
-void PluginManager::LoadPlugin(fs::path path)
+void PluginManager::AddAllPlugins()
 {
-
-	TFE_INFO("PATH: {}", path.string());
-	TFE_FLUSH;
-	Plugin plugin;
-	DWORD processID = Utility::GetProcessID(L"trials_fusion.exe");
-	plugin.handle = LoadLibraryA(path.string().c_str());
-
-	//LoadLibraryA(path.string().c_str());
-
-	plugin.enabled = true;
-	plugin.path = path.string();
-	plugin.name = path.stem().string();
-
-	m_plugins.push_back(plugin);
-	TFE_INFO("Plugin Loaded: {}\nHandle: {}\nPath: {}", plugin.name, (int)plugin.handle, plugin.path);
-}
-
-void PluginManager::LoadAllPlugins()
-{
-	fs::create_directories(m_pluginDirectory);
-
-	for (fs::directory_entry entry : fs::recursive_directory_iterator(m_pluginDirectory))
+	const std::string pluginSearchQuery = pluginsDirectory + "\\*.dll";
+	WIN32_FIND_DATAA fileData;
+	HANDLE fileHandle = FindFirstFileA(pluginSearchQuery.c_str(), &fileData);
+	if (fileHandle != INVALID_HANDLE_VALUE)
 	{
-		if (!entry.is_regular_file()) 
+		do
 		{
-			TFE_INFO("{} is not a regular file, skipping...", entry.path().string());
-			continue;
-		}
+			const std::string pluginPath = pluginsDirectory + "\\" + fileData.cFileName;
+			TFE_INFO("Loading \"{}\"", fileData.cFileName);
 
-		std::string extension = entry.path().extension().string();
-		std::transform(extension.begin(), extension.end(), extension.begin(), ::toupper);
-		if (extension != ".DLL")
-		{
-			TFE_INFO("{} is not a *.dll, skipping...", entry.path().string());
-			continue;
-		}
+			if (HMODULE module = LoadLibraryA(pluginPath.c_str()))
+			{
+				char buffer[64];
+				snprintf(buffer, 64, "\tLoaded \"%s\" => 0x%08X", fileData.cFileName, module);
+				TFE_INFO(buffer);
+			}
+			else
+			{
+				TFE_ERROR("\tFailed to load");
+			}
 
-		LoadPlugin(entry.path().string());
+		} while (FindNextFileA(fileHandle, &fileData));
 
-		Sleep(m_loadDelay);
-	}
-
-	if (m_plugins.size() == 1) 
-	{
-		TFE_INFO("1 plugin loaded");
-	}
-	else 
-	{
-		TFE_INFO("{} plugins loaded", (int)m_plugins.size())
+		FindClose(fileHandle);
 	}
 }
 
-void PluginManager::UnloadAllPlugins()
+void PluginManager::RemoveAllPlugins()
 {
-	TFE_INFO("Unloading {} plugins...", (int)m_plugins.size());
+	TFE_INFO("Removing all plugins...");
 	for (const auto& plugin : m_plugins)
 	{
 		DisablePlugin(plugin);
@@ -75,8 +50,7 @@ void PluginManager::EnablePlugin(const std::vector<Plugin>::iterator& it)
 {
 	if (!it->enabled)
 	{
-		DWORD processID = Utility::GetProcessID(L"trials_fusion.exe");
-		it->handle = Utility::LoadLibraryRemotely(processID, it->path.c_str());
+		it->handle = LoadLibraryA(it->path.c_str());
 		it->enabled = true;
 	}
 }
@@ -108,8 +82,7 @@ void PluginManager::DisablePlugin(const std::vector<Plugin>::iterator& it)
 {
 	if (it->enabled)
 	{
-		DWORD processID = Utility::GetProcessID(L"trials_fusion.exe");
-		Utility::FreeLibraryRemotely(processID, it->handle);
+		FreeLibrary(it->handle);
 		it->enabled = false;
 	}
 }
