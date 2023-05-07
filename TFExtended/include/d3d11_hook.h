@@ -19,5 +19,5 @@ namespace D3D11Hook
 
 	void HookD3D11Present();
 
-	void Initialize(std::unique_ptr<PluginManager>& pluginManager);
+	void Initialize(std::shared_ptr<PluginManager>& pluginManager);
 }

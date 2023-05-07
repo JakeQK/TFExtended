@@ -21,6 +21,7 @@
 #include <format>
 #include <algorithm>
 #include <d3d11.h>
+#include <map>
 
 #pragma comment(lib, "d3d11.lib")
 

@@ -16,7 +16,17 @@
 #define TFEXTENDED_VERSION_MINOR 0
 
 LogManager							g_logManager;
-std::unique_ptr<PluginManager>		g_pluginManager;
+std::shared_ptr<PluginManager>		g_pluginManager;
+
+__declspec(dllexport) void registerPlugin(HMODULE hModule, std::string name, callbackFunction_t presentCallback)
+{
+	g_pluginManager->registerPlugin(hModule, name, presentCallback);
+}
+
+__declspec(dllexport) void unregisterPlugin(HMODULE hModule)
+{
+	g_pluginManager->unregisterPlugin(hModule);
+}
 
 // Initializes TFExtended
 DWORD WINAPI InitTFExtended()
@@ -31,9 +41,9 @@ DWORD WINAPI InitTFExtended()
 	TFE_INFO("TFExtended v{}.{}", TFEXTENDED_VERSION_MAJOR, TFEXTENDED_VERSION_MINOR);
 
 	// Construct our PluginManager utilizing unique pointer
-	g_pluginManager = std::make_unique<PluginManager>();
+	g_pluginManager = std::make_shared<PluginManager>();
 
-	g_pluginManager->AddAllPlugins();
+	g_pluginManager->LoadAllPlugins();
 
 	// Initialize our D3D11 Hooks
 	D3D11Hook::Initialize(g_pluginManager);

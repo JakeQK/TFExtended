@@ -1,20 +1,21 @@
 #include "pch.h"
 #include "plugin_manager.h"
 
-PluginManager::PluginManager()
+PluginManager::PluginManager(std::string pluginFolder) : m_pluginsDirectory(pluginFolder)
 {
+
 }
 
-void PluginManager::AddAllPlugins()
+void PluginManager::LoadAllPlugins()
 {
-	const std::string pluginSearchQuery = pluginsDirectory + "\\*.dll";
+	const std::string pluginSearchQuery = m_pluginsDirectory + "\\*.dll";
 	WIN32_FIND_DATAA fileData;
 	HANDLE fileHandle = FindFirstFileA(pluginSearchQuery.c_str(), &fileData);
 	if (fileHandle != INVALID_HANDLE_VALUE)
 	{
 		do
 		{
-			const std::string pluginPath = pluginsDirectory + "\\" + fileData.cFileName;
+			const std::string pluginPath = m_pluginsDirectory + "\\" + fileData.cFileName;
 			TFE_INFO("Loading \"{}\"", fileData.cFileName);
 
 			if (HMODULE module = LoadLibraryA(pluginPath.c_str()))
@@ -34,55 +35,46 @@ void PluginManager::AddAllPlugins()
 	}
 }
 
+// BUG: 'unregisterPlugin' crashes Trials Fusion
 void PluginManager::RemoveAllPlugins()
 {
-	TFE_INFO("Removing all plugins...");
-	for (const auto& plugin : m_plugins)
+	if (plugins.size()) 
 	{
-		DisablePlugin(plugin);
-	}
-
-	m_plugins = std::vector<Plugin>();
-	TFE_INFO("Done");
-}
-
-void PluginManager::EnablePlugin(const std::vector<Plugin>::iterator& it)
-{
-	if (!it->enabled)
-	{
-		it->handle = LoadLibraryA(it->path.c_str());
-		it->enabled = true;
+		for (auto& pair : plugins)
+		{
+			unregisterPlugin(pair.first);
+		}
+		plugins.clear();
 	}
 }
 
-void PluginManager::EnablePlugin(Plugin plugin)
+void PluginManager::registerPlugin(HMODULE hModule, std::string name, callbackFunction_t presentCallback)
 {
-	if (!plugin.enabled)
+	if (plugins.find(hModule) == plugins.end())
 	{
-		auto it = std::find(m_plugins.begin(), m_plugins.end(), plugin);
+		Plugin plugin;
+		plugin.name = name;
+		plugin.presentCallback = presentCallback;
 
-		if (it == m_plugins.end())
-			return;
-
-		EnablePlugin(it);
+		plugins[hModule] = std::make_shared<Plugin>(plugin);
+		TFE_INFO("Registered plugin '{}'", name);
 	}
-}
-
-void PluginManager::DisablePlugin(Plugin plugin)
-{
-	std::vector<Plugin>::iterator it = std::find(m_plugins.begin(), m_plugins.end(), plugin);
-
-	if (it == m_plugins.end())
-		return;
-
-	DisablePlugin(it);
-}
-
-void PluginManager::DisablePlugin(const std::vector<Plugin>::iterator& it)
-{
-	if (it->enabled)
+	else
 	{
-		FreeLibrary(it->handle);
-		it->enabled = false;
+		TFE_ERROR("Plugin '{}' is already registered", name);
+	}
+
+}
+
+// BUG: Crashes trials fusion
+void PluginManager::unregisterPlugin(HMODULE hModule)
+{
+	auto pluginIt = plugins.find(hModule);
+	if (pluginIt != plugins.end())
+	{
+		TFE_INFO("Unregistered '{}'", pluginIt->second->name);
+		plugins.erase(hModule);
+		FreeLibrary(hModule);
+		CloseHandle(hModule);
 	}
 }

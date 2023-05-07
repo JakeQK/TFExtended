@@ -1,36 +1,12 @@
 #include "pch.h"
 #include "d3d11_hook.h"
 
-typedef void (*PresentCallback_t)();
-std::vector<PresentCallback_t> g_presentCallbacks;
-
 std::unique_ptr<InputHook> g_inputHook;
-
-// Adds ImGuiCallback functions to ImGuiCallbacks vector to be called within Present Hook
-__declspec(dllexport) void registerPresentCallback(PresentCallback_t callback)
-{
-	// Ensure callback isn't already part of the vector, if not, add it
-	if (std::find(g_presentCallbacks.begin(), g_presentCallbacks.end(), callback) == g_presentCallbacks.end())
-	{
-		g_presentCallbacks.push_back(callback);
-		TFE_INFO("{} callback registered.", fmt::ptr(callback))
-	}
-}
-
-__declspec(dllexport) void unregisterPresentCallback(PresentCallback_t callback)
-{
-	// Finds callback in ImGuiCallbacks vector and removes it if found
-	auto callbackIterator = std::find(g_presentCallbacks.begin(), g_presentCallbacks.end(), callback);
-	if (callbackIterator != g_presentCallbacks.end())
-	{
-		g_presentCallbacks.erase(callbackIterator);
-		TFE_INFO("{} callback unregistered.", fmt::ptr(callback));
-	}
-}
 
 namespace D3D11Hook
 {
 	std::unique_ptr<Menu>		g_mainMenu = nullptr;
+	std::shared_ptr<PluginManager>		g_pluginManager = nullptr;
 	static ID3D11Device*				g_pd3dDevice = nullptr;
 	static ID3D11DeviceContext*			g_pd3dContext = nullptr;
 	static IDXGISwapChain*				g_pSwapChain = nullptr;
@@ -88,12 +64,13 @@ namespace D3D11Hook
 		// Render TFExtended Main Menu
 		g_mainMenu->Render();
 
-		// Render ImGuiCallback functions
-		if (!g_presentCallbacks.empty())
+		// Call plugins present callbacks
+		if (g_pluginManager->plugins.size())
 		{
-			for (PresentCallback_t callback : g_presentCallbacks)
+			for (auto& pair : g_pluginManager->plugins)
 			{
-				callback();
+				if (pair.second->presentCallback != nullptr)
+					pair.second->presentCallback();
 			}
 		}
 
@@ -144,8 +121,9 @@ namespace D3D11Hook
 		if (MH_EnableHook(pSwapChainPresent) != MH_OK) { TFE_ERROR("Failed to enable Present Hook") }
 	}
 
-	void Initialize(std::unique_ptr<PluginManager>& pluginManager)
+	void Initialize(std::shared_ptr<PluginManager>& pluginManager)
 	{
+		g_pluginManager = pluginManager;
 		g_mainMenu = std::make_unique<Menu>(pluginManager);
 		HookD3D11Present();
 	}

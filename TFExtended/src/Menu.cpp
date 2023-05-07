@@ -1,18 +1,19 @@
 #include "pch.h"
 #include "menu.h"
 
-Menu::Menu(std::unique_ptr<PluginManager>& pluginManager) : m_pluginManager(pluginManager)
+Menu::Menu(std::shared_ptr<PluginManager>& pluginManager) : m_pluginManager(pluginManager)
 {
 
 }
 
 Menu::~Menu()
 {
+
 }
 
-// Renders the Main Menu for TFExtended
 void Menu::Render()
 {
+	// Set up ImGui window flags and get IO
 	static ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse;
 	ImGuiIO& io = ImGui::GetIO();
 
@@ -31,54 +32,63 @@ void Menu::Render()
 	// Plugin Manager tab
 	if (ImGui::BeginTabItem("Plugin Manager"))
 	{
-		if (m_pluginManager->m_plugins.empty())
+		if (m_pluginManager->plugins.empty())
 		{
 			// No plugins loaded
 			ImGui::Text("No plugins currently loaded");
-			if (ImGui::Button("Load plugins"))
+			if (ImGui::Button("Load Plugins"))
 			{
-				m_pluginManager->AddAllPlugins();
+				m_pluginManager->LoadAllPlugins();
 			}
 		}
 		else
 		{
-			// Display loaded plugins
-			for (auto pluginIterator = m_pluginManager->m_plugins.begin(); pluginIterator != m_pluginManager->m_plugins.end(); pluginIterator++)
+			// Start a table to display loaded plugins
+			if (ImGui::BeginTable("PluginsTable", 2)) 
 			{
-				ImGui::Text("%s %s", pluginIterator->name.c_str(), pluginIterator->path.c_str());
-				ImGui::SameLine();
-				if (pluginIterator->enabled)
+				ImGui::TableSetupColumn("Address"); // Set up column 1
+				ImGui::TableSetupColumn("Plugin");	// Set up column 2
+				ImGui::TableHeadersRow();			// Set up header row
+
+				// Iterate over all loaded plugins
+				for (auto& pair : m_pluginManager->plugins)
 				{
-					// Unload button
-					if (ImGui::Button("Unload"))
-						m_pluginManager->DisablePlugin(pluginIterator);
+					ImGui::TableNextRow();							// Move to next row
+					ImGui::TableNextColumn();						// Move to column 1
+					ImGui::Text("0x%08X", pair.first);				// Display plugin address in hex format
+					ImGui::TableNextColumn();						// Move to column 2
+					ImGui::Text("%s", pair.second->name.c_str());	// Display plugin name
 				}
-				else
-				{
-					// Load button
-					if (ImGui::Button("Load"))
-						m_pluginManager->EnablePlugin(pluginIterator);
-				}
+				ImGui::EndTable();
 			}
 
-			// Unload all plugins button
+			// TODO: Fix 'RemoveAllPlugins' bug -> plugin_manager.cpp
+
+			/*
 			if (ImGui::Button("Unload all plugins"))
 			{
 				m_pluginManager->RemoveAllPlugins();
 			}
+			*/
 		}
+
+		// End Plugin Manager tab
 		ImGui::EndTabItem();
 	}
 
 	// Debug tab
 	if (ImGui::BeginTabItem("Debug"))
 	{
-		// TODO: Add debug information
+		// TODO: Add debug information.
 
+		// End Debug tab
 		ImGui::EndTabItem();
 	}
 	ImGui::EndTabBar();
 
+
+	ImGui::PopItemWidth();
+	ImGui::PopItemWidth();
 	// End window
 	ImGui::End();
 }
