@@ -9,6 +9,9 @@ PluginManager::PluginManager(std::string pluginFolder) : m_pluginsDirectory(plug
 void PluginManager::LoadAllPlugins()
 {
 	const std::string pluginSearchQuery = m_pluginsDirectory + "\\*.dll";
+
+	SetDllDirectoryA(m_pluginsDirectory.c_str());
+
 	WIN32_FIND_DATAA fileData;
 	HANDLE fileHandle = FindFirstFileA(pluginSearchQuery.c_str(), &fileData);
 	if (fileHandle != INVALID_HANDLE_VALUE)
@@ -16,23 +19,35 @@ void PluginManager::LoadAllPlugins()
 		do
 		{
 			const std::string pluginPath = m_pluginsDirectory + "\\" + fileData.cFileName;
-			TFE_INFO("Loading \"{}\"", fileData.cFileName);
+			TFE_INFO("Loading \"{}\"", pluginPath.c_str());
 
-			if (HMODULE module = LoadLibraryA(pluginPath.c_str()))
+			HMODULE module = LoadLibraryA(pluginPath.c_str());
+			if(!module)
 			{
-				char buffer[64];
-				snprintf(buffer, 64, "\tLoaded \"%s\" => 0x%08X", fileData.cFileName, module);
-				TFE_INFO(buffer);
+				DWORD error = GetLastError();
+				char errorMsg[256];
+				FormatMessageA(
+					FORMAT_MESSAGE_FROM_SYSTEM,
+					NULL,
+					error,
+					0, errorMsg,
+					sizeof(errorMsg),
+					NULL
+				);
+
+				TFE_ERROR("Failed to load \"{}\": Error {}: {}",
+					fileData.cFileName, error, errorMsg);
+				continue;
 			}
-			else
-			{
-				TFE_ERROR("\tFailed to load");
-			}
+
+			TFE_INFO("\tLoaded \"{}\" => 0x{:08X}", fileData.cFileName, (uintptr_t)module)
 
 		} while (FindNextFileA(fileHandle, &fileData));
 
 		FindClose(fileHandle);
 	}
+
+	SetDllDirectoryA(NULL);
 }
 
 // BUG: 'unregisterPlugin' crashes Trials Fusion
@@ -72,9 +87,9 @@ void PluginManager::unregisterPlugin(HMODULE hModule)
 	auto pluginIt = plugins.find(hModule);
 	if (pluginIt != plugins.end())
 	{
-		TFE_INFO("Unregistered '{}'", pluginIt->second->name);
+		TFE_INFO("Unregistering '{}'", pluginIt->second->name);
 		plugins.erase(hModule);
 		FreeLibrary(hModule);
-		CloseHandle(hModule);
+		// CloseHandle(hModule);
 	}
 }

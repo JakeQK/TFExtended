@@ -46,7 +46,7 @@ DWORD WINAPI InitTFExtended()
 	g_pluginManager->LoadAllPlugins();
 
 	// Initialize our D3D11 Hooks
-	D3D11Hook::Initialize(g_pluginManager);
+	//D3D11Hook::Initialize(g_pluginManager);
 
 	// Keeps application alive until termination key is pressed
 	static bool TerminateTFExtended = false;
