@@ -34,7 +34,9 @@ DWORD WINAPI InitTFExtended()
 	// trials_fusion.exe launches UbisoftGameLauncher.exe and then actually launches the game
 	// if you don't put this check, it will launch DLL's twice
 	if (Utility::GetProcessID(L"UbisoftGameLauncher.exe") == 0)
+	{
 		return 0;
+	}
 
 	// Initialize our Log Manager
 	g_logManager.Initialize();
@@ -46,7 +48,7 @@ DWORD WINAPI InitTFExtended()
 	g_pluginManager->LoadAllPlugins();
 
 	// Initialize our D3D11 Hooks
-	//D3D11Hook::Initialize(g_pluginManager);
+	D3D11Hook::Initialize(g_pluginManager);
 
 	// Keeps application alive until termination key is pressed
 	static bool TerminateTFExtended = false;
@@ -62,14 +64,16 @@ DWORD WINAPI InitTFExtended()
 	return 0;
 }
 
-// DLL entry point
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved)
 {
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
 		DisableThreadLibraryCalls(hModule);
-		CreateThread(0, 0, (LPTHREAD_START_ROUTINE)InitTFExtended, 0, 0, 0);
+
+		D3D11Hook::DemoD3D11Hook();
+
+		//CreateThread(0, 0, (LPTHREAD_START_ROUTINE)InitTFExtended, 0, 0, 0);
 		break;
 	case DLL_PROCESS_DETACH:
 		break;

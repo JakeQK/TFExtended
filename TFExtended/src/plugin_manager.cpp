@@ -40,7 +40,7 @@ void PluginManager::LoadAllPlugins()
 				continue;
 			}
 
-			TFE_INFO("\tLoaded \"{}\" => 0x{:08X}", fileData.cFileName, (uintptr_t)module)
+			TFE_INFO("\tLoaded \"{}\" => 0x{:08X}", fileData.cFileName, (uintptr_t)module);
 
 		} while (FindNextFileA(fileHandle, &fileData));
 

@@ -11,13 +11,9 @@
 
 namespace D3D11Hook
 {
-	static HWND	g_hWnd = nullptr;
-
-	HRESULT __stdcall hSwapChainPresent(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags);
-
-	DXGI_SWAP_CHAIN_DESC CreateDummySwapchainDesc();
-
-	void HookD3D11Present();
-
 	void Initialize(std::shared_ptr<PluginManager>& pluginManager);
+
+	int HookD3D11();
+
+	void DemoD3D11Hook();
 }
